@@ -20,13 +20,31 @@ jobs:
           EDT_ICS_URL: ${{ secrets.EDT_ICS_URL }}
         run: |
           mkdir -p data
-          curl -sL --fail "$EDT_ICS_URL" -o data/edt.ics.tmp
-          # on ne remplace le fichier que si le téléchargement a bien un contenu
+          if [ -z "$EDT_ICS_URL" ]; then
+            echo "::error::Le secret EDT_ICS_URL est vide ou absent. Va dans Settings > Secrets and variables > Actions et ajoute-le."
+            exit 1
+          fi
+          HTTP_CODE=$(curl -sL -w "%{http_code}" "$EDT_ICS_URL" -o data/edt.ics.tmp)
+          echo "Code HTTP reçu : $HTTP_CODE"
+          echo "Taille du fichier téléchargé : $(wc -c < data/edt.ics.tmp) octets"
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::error::L'IUT a répondu avec le code HTTP $HTTP_CODE au lieu de 200. Vérifie que l'URL du secret EDT_ICS_URL est toujours valide (le lien peut expirer)."
+            rm -f data/edt.ics.tmp
+            exit 1
+          fi
+          if ! grep -q "BEGIN:VCALENDAR" data/edt.ics.tmp; then
+            echo "::error::Le contenu téléchargé ne ressemble pas à un fichier .ics valide (pas de BEGIN:VCALENDAR). Début du contenu :"
+            head -c 300 data/edt.ics.tmp
+            rm -f data/edt.ics.tmp
+            exit 1
+          fi
           if [ -s data/edt.ics.tmp ]; then
             mv data/edt.ics.tmp data/edt.ics
+            echo "OK : data/edt.ics mis à jour."
           else
-            echo "Téléchargement vide, on garde l'ancien fichier"
+            echo "::error::Téléchargement vide, on garde l'ancien fichier."
             rm -f data/edt.ics.tmp
+            exit 1
           fi
 
       - name: Commit si changement

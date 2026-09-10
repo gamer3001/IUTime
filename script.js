@@ -202,23 +202,38 @@
     showStatus("loading");
     var controller = (typeof AbortController !== "undefined") ? new AbortController() : null;
     var timeoutId = controller ? setTimeout(function(){ controller.abort(); }, 10000) : null;
-    fetch(ICS_URL + "?t=" + Date.now(), { cache: "no-store", signal: controller ? controller.signal : undefined })
+    var fetchedUrl = ICS_URL + "?t=" + Date.now();
+    fetch(fetchedUrl, { cache: "no-store", signal: controller ? controller.signal : undefined })
       .then(function(res){
         if (timeoutId) clearTimeout(timeoutId);
-        if (!res.ok) throw new Error("HTTP " + res.status);
+        if (!res.ok){
+          var e = new Error("HTTP " + res.status);
+          e.httpStatus = res.status;
+          throw e;
+        }
         return res.text();
       })
       .then(function(text){
+        // Filet de sécurité : si le fichier récupéré n'est pas un vrai .ics
+        // (ex: page 404 de GitHub Pages renvoyée avec un statut 200, fichier
+        // vide, ou contenu corrompu), on le signale clairement au lieu
+        // d'afficher un planning vide sans explication.
+        if (!/BEGIN:VCALENDAR/i.test(text)){
+          var e2 = new Error("Contenu invalide (pas de BEGIN:VCALENDAR)");
+          e2.badContent = true;
+          e2.snippet = text.slice(0, 160);
+          throw e2;
+        }
         state.events = parseIcs(text);
         assignColorsInOrder();
         hideStatus();
         renderLegend();
         render();
-        el.metaLine.textContent = "Dernière synchro : " + new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+        el.metaLine.textContent = "Dernière synchro : " + new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}) + " · " + state.events.length + " événement(s)";
       })
       .catch(function(err){
         if (timeoutId) clearTimeout(timeoutId);
-        showStatus("error", err);
+        showStatus("error", err, fetchedUrl);
       })
       .finally(function(){
         if (el.refreshBtn) el.refreshBtn.classList.remove("spinning");
@@ -237,17 +252,33 @@
     });
   }
 
-  function showStatus(kind){
+  function showStatus(kind, err, url){
     el.board.style.display = "none";
     el.statusPanel.style.display = "block";
     if (kind==="loading"){
-      el.statusPanel.innerHTML = "<strong>Récupération de l'emploi du temps…</strong>Connexion à edt-iut.univ-lille.fr";
+      el.statusPanel.innerHTML = "<strong>Récupération de l'emploi du temps…</strong>Lecture de data/edt.ics";
     } else if (kind==="error"){
+      var diag = "";
+      if (err && err.httpStatus === 404){
+        diag = "Diagnostic : le fichier <code>data/edt.ics</code> répond en <strong>404</strong> — il n'existe donc pas encore à cet endroit du site. " +
+               "Le plus souvent ça veut dire que le workflow GitHub Actions « Sync emploi du temps » n'a jamais tourné avec succès (secret manquant, permissions d'écriture désactivées, ou pas encore lancé une première fois manuellement).";
+      } else if (err && err.httpStatus){
+        diag = "Diagnostic : le serveur a répondu avec le code HTTP <strong>" + err.httpStatus + "</strong> pour <code>" + escapeHtml(url||ICS_URL) + "</code>.";
+      } else if (err && err.badContent){
+        diag = "Diagnostic : le fichier a bien été trouvé, mais son contenu ne ressemble pas à un vrai fichier .ics (il ne contient pas <code>BEGIN:VCALENDAR</code>). " +
+               "Début du contenu reçu : <code>" + escapeHtml(err.snippet||"") + "</code>";
+      } else if (err && err.name === "AbortError"){
+        diag = "Diagnostic : la requête a expiré après 10 secondes sans réponse (problème réseau ou serveur trop lent).";
+      } else if (err){
+        diag = "Diagnostic : " + escapeHtml(err.message || String(err)) + ".";
+      }
       el.statusPanel.innerHTML =
         "<strong>L'emploi du temps n'est pas encore disponible</strong>" +
         "Le fichier data/edt.ics est introuvable ou pas encore synchronisé (la synchro automatique tourne toutes les 10 minutes). " +
         "Tu peux réessayer, ou coller ci-dessous le contenu du fichier .ics téléchargé manuellement depuis Hyperplanning en attendant." +
-        "<div class='row-btns'><button class='btn' id='retryBtn'>Réessayer</button></div>" +
+        (diag ? "<p style='font-size:.72rem;text-align:left;background:var(--paper-dark);border-radius:8px;padding:8px 10px;margin-top:12px;'>" + diag + "</p>" : "") +
+        "<div class='row-btns'><button class='btn' id='retryBtn'>Réessayer</button>" +
+        "<a class='btn ghost' href='" + (url||ICS_URL) + "' target='_blank' rel='noopener'>Ouvrir data/edt.ics</a></div>" +
         "<textarea id='icsPaste' placeholder='Colle ici le contenu du fichier .ics…'></textarea>" +
         "<div class='row-btns'><button class='btn ghost' id='loadPasteBtn'>Charger ce texte</button></div>";
       document.getElementById("retryBtn").addEventListener("click", function(){ fetchSchedule(true); });
