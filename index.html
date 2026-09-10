@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>Mon emploi du temps</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <span class="kicker">IUT Lille — Hyperplanning</span>
+      <h1>Mon emploi du temps</h1>
+    </div>
+    <div class="top-actions">
+      <button class="icon-btn" id="refreshBtn" title="Actualiser">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 4v6h-6"/></svg>
+      </button>
+      <a class="device-btn" href="pc.html" title="Passer sur la version ordinateur">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="1.5"/><path d="M8 21h8M12 17v4"/></svg>
+        <span class="full">Version PC</span>
+      </a>
+    </div>
+  </header>
+
+  <div class="controls">
+    <div class="nav-cluster">
+      <button class="arrow-btn" id="prevBtn" aria-label="Précédent">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <button class="date-pill" id="datePill">
+        <span id="dateMain">—</span>
+        <span class="sub" id="dateSub">chargement…</span>
+      </button>
+      <button class="arrow-btn" id="nextBtn" aria-label="Suivant">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+    </div>
+    <div class="view-toggle">
+      <button id="dayModeBtn" class="active">Jour</button>
+      <button id="weekModeBtn">Semaine</button>
+    </div>
+  </div>
+
+  <div id="statusPanel" class="panel" style="display:none;"></div>
+
+  <div class="board" id="board" style="display:none;">
+    <div class="grid-row">
+      <div class="hour-rail" id="hourRail"></div>
+      <div class="day-columns" id="colHeads" style="border-bottom:2px solid var(--ink);"></div>
+    </div>
+    <div class="board-scroll" id="boardScroll">
+      <div class="grid-row" style="position:relative;">
+        <div class="hour-rail" id="hourRailBody"></div>
+        <div class="day-columns" id="dayColumns"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="legend" id="legend"></footer>
+  <div class="meta-line" id="metaLine"></div>
+</div>
+
+<div class="cal-pop" id="calPop">
+  <div class="cal-box">
+    <div class="cal-box-head">
+      <button class="arrow-btn" id="calPrevMonth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <span id="calMonthLabel">—</span>
+      <button class="arrow-btn" id="calNextMonth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></button>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+    <button class="cal-today-btn" id="calTodayBtn">Revenir à aujourd'hui</button>
+  </div>
+</div>
+
+<script>
+  window.EDT_CONFIG = { mode: "day", hourPx: 64, scrollHour: 7, keyboardNav: false };
+</script>
+<script src="script.js"></script>
+</body>
+</html>

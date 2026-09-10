@@ -1,0 +1,96 @@
+body{ background-size: 26px 26px; }
+
+.layout{
+  max-width:1240px;
+  margin:0 auto;
+  padding:28px 32px 60px;
+  display:grid;
+  grid-template-columns:250px 1fr;
+  gap:30px;
+  align-items:start;
+}
+
+.sidebar{
+  position:sticky;
+  top:28px;
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+  padding-right:6px;
+  border-right:2px solid var(--ink);
+}
+.sidebar .brand{gap:4px;}
+.sidebar .brand h1{font-size:1.7rem;line-height:1.05;}
+.sidebar .brand .kicker{font-size:.72rem;}
+
+.sidebar-row{display:flex;align-items:center;gap:10px;}
+
+.sidebar-section h2{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:.68rem;
+  letter-spacing:.03em;
+  color:var(--ink-soft);
+  margin:0 0 10px;
+  font-weight:500;
+}
+.sidebar-section .legend{
+  flex-direction:column;
+  gap:8px;
+  margin-top:0;
+}
+.sidebar-section .legend-item{font-size:.72rem;}
+
+.sidebar .meta-line{text-align:left;margin-top:auto;padding-top:14px;border-top:1px solid var(--rule);}
+
+.main-col{min-width:0;}
+
+.main-col .controls{margin-top:0;}
+
+.board-scroll{max-height:calc(100vh - 190px);}
+
+.hour-rail{width:64px;}
+.hour-rail .hour-slot{font-size:.72rem;}
+
+.event{transition:box-shadow .15s ease, transform .15s ease;}
+.event:hover{
+  box-shadow:3px 3px 0 rgba(38,35,25,.22);
+  transform:translateY(-1px);
+  z-index:6;
+}
+.event .t-name{font-size:.8rem;}
+.event .t-time,.event .t-room{font-size:.68rem;}
+
+.date-pill{font-size:1.2rem;}
+.col-head .dname{font-size:1rem;}
+
+.kbd-hint{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:.62rem;
+  color:var(--ink-soft);
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.kbd-hint kbd{
+  border:1px solid var(--rule-strong);
+  border-bottom-width:2px;
+  border-radius:4px;
+  padding:1px 5px;
+  background:var(--paper-dark);
+  font-family:inherit;
+}
+
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr;}
+  .sidebar{
+    position:static;
+    border-right:none;
+    border-bottom:2px solid var(--ink);
+    padding-bottom:16px;
+    flex-direction:row;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .sidebar-section{width:100%;}
+}

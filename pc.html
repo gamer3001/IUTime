@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mon emploi du temps — version ordinateur</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="desktop.css">
+</head>
+<body>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="kicker">IUT Lille — Hyperplanning</span>
+      <h1>Mon emploi<br>du temps</h1>
+    </div>
+
+    <div class="sidebar-row">
+      <button class="icon-btn" id="refreshBtn" title="Actualiser">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 4v6h-6"/></svg>
+      </button>
+      <a class="device-btn" href="index.html" title="Passer sur la version smartphone">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>
+        <span>Version mobile</span>
+      </a>
+    </div>
+
+    <div class="sidebar-row kbd-hint">
+      <span><kbd>←</kbd> <kbd>→</kbd> pour naviguer · <kbd>t</kbd> aujourd'hui</span>
+    </div>
+
+    <div class="sidebar-section">
+      <h2>Matières</h2>
+      <div class="legend" id="legend"></div>
+    </div>
+
+    <div class="meta-line" id="metaLine"></div>
+  </aside>
+
+  <main class="main-col">
+    <div class="controls">
+      <div class="nav-cluster">
+        <button class="arrow-btn" id="prevBtn" aria-label="Précédent">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <button class="date-pill" id="datePill">
+          <span id="dateMain">—</span>
+          <span class="sub" id="dateSub">chargement…</span>
+        </button>
+        <button class="arrow-btn" id="nextBtn" aria-label="Suivant">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      </div>
+      <div class="view-toggle">
+        <button id="dayModeBtn">Jour</button>
+        <button id="weekModeBtn" class="active">Semaine</button>
+      </div>
+    </div>
+
+    <div id="statusPanel" class="panel" style="display:none;"></div>
+
+    <div class="board" id="board" style="display:none;">
+      <div class="grid-row">
+        <div class="hour-rail" id="hourRail"></div>
+        <div class="day-columns" id="colHeads" style="border-bottom:2px solid var(--ink);"></div>
+      </div>
+      <div class="board-scroll" id="boardScroll">
+        <div class="grid-row" style="position:relative;">
+          <div class="hour-rail" id="hourRailBody"></div>
+          <div class="day-columns" id="dayColumns"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="cal-pop" id="calPop">
+  <div class="cal-box">
+    <div class="cal-box-head">
+      <button class="arrow-btn" id="calPrevMonth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <span id="calMonthLabel">—</span>
+      <button class="arrow-btn" id="calNextMonth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></button>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+    <button class="cal-today-btn" id="calTodayBtn">Revenir à aujourd'hui</button>
+  </div>
+</div>
+
+<script>
+  window.EDT_CONFIG = { mode: "week", hourPx: 76, scrollHour: 7, keyboardNav: true };
+</script>
+<script src="script.js"></script>
+</body>
+</html>
