@@ -91,6 +91,14 @@
 
 <script>
   window.EDT_CONFIG = { mode: "week", hourPx: 76, scrollHour: 7, keyboardNav: true };
+  setTimeout(function(){
+    var sp = document.getElementById("statusPanel");
+    var board = document.getElementById("board");
+    if (sp && board && sp.style.display !== "block" && board.style.display !== "block"){
+      sp.style.display = "block";
+      sp.innerHTML = "<strong>Le site ne répond pas</strong>script.js ne s'est pas exécuté correctement (fichier manquant à côté de pc.html, bloqueur de script, ou erreur réseau). Ouvre la console du navigateur (F12 → Console) pour voir le détail de l'erreur.";
+    }
+  }, 9000);
 </script>
 <script src="script.js"></script>
 </body>

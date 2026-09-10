@@ -200,8 +200,11 @@
   function fetchSchedule(showSpinner){
     if (showSpinner && el.refreshBtn) el.refreshBtn.classList.add("spinning");
     showStatus("loading");
-    fetch(ICS_URL, { cache: "no-store" })
+    var controller = (typeof AbortController !== "undefined") ? new AbortController() : null;
+    var timeoutId = controller ? setTimeout(function(){ controller.abort(); }, 10000) : null;
+    fetch(ICS_URL, { cache: "no-store", signal: controller ? controller.signal : undefined })
       .then(function(res){
+        if (timeoutId) clearTimeout(timeoutId);
         if (!res.ok) throw new Error("HTTP " + res.status);
         return res.text();
       })
@@ -214,6 +217,7 @@
         el.metaLine.textContent = "Dernière synchro : " + new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
       })
       .catch(function(err){
+        if (timeoutId) clearTimeout(timeoutId);
         showStatus("error", err);
       })
       .finally(function(){

@@ -79,6 +79,17 @@
 
 <script>
   window.EDT_CONFIG = { mode: "day", hourPx: 64, scrollHour: 7, keyboardNav: false };
+  // Filet de sécurité : si rien ne s'est passé après 9s (script.js absent,
+  // bloqué, ou erreur silencieuse), on affiche un message au lieu de rester
+  // bloqué sur "chargement…".
+  setTimeout(function(){
+    var sp = document.getElementById("statusPanel");
+    var board = document.getElementById("board");
+    if (sp && board && sp.style.display !== "block" && board.style.display !== "block"){
+      sp.style.display = "block";
+      sp.innerHTML = "<strong>Le site ne répond pas</strong>script.js ne s'est pas exécuté correctement (fichier manquant à côté de index.html, bloqueur de script, ou erreur réseau). Ouvre la console du navigateur (F12 → Console) pour voir le détail de l'erreur.";
+    }
+  }, 9000);
 </script>
 <script src="script.js"></script>
 </body>
