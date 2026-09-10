@@ -1,0 +1,42 @@
+name: Sync emploi du temps
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Télécharger le fichier .ics
+        env:
+          EDT_ICS_URL: ${{ secrets.EDT_ICS_URL }}
+        run: |
+          mkdir -p data
+          curl -sL --fail "$EDT_ICS_URL" -o data/edt.ics.tmp
+          # on ne remplace le fichier que si le téléchargement a bien un contenu
+          if [ -s data/edt.ics.tmp ]; then
+            mv data/edt.ics.tmp data/edt.ics
+          else
+            echo "Téléchargement vide, on garde l'ancien fichier"
+            rm -f data/edt.ics.tmp
+          fi
+
+      - name: Commit si changement
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/edt.ics
+          if git diff --cached --quiet; then
+            echo "Aucun changement dans l'emploi du temps"
+          else
+            git commit -m "Sync auto de l'emploi du temps"
+            git push
+          fi

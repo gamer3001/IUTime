@@ -5,7 +5,7 @@
   // Config (peut être personnalisée par page via window.EDT_CONFIG)
   // ---------------------------------------------------------------
   var CFG = window.EDT_CONFIG || {};
-  var ICS_URL = "https://edt-iut.univ-lille.fr/Telechargements/ical/Edt_S1_E.ics?version=2018.0.3.6&idICal=4CBA5D3D2C131D27CCD0C7BFDF4C2827&param=643d5b312e2e36325d2666683d3126663d3131303030";
+  var ICS_URL = "data/edt.ics";
   var HOUR_START = 0;
   var HOUR_END = 24;
   var HOUR_PX = CFG.hourPx || 64;
@@ -202,7 +202,7 @@
     showStatus("loading");
     var controller = (typeof AbortController !== "undefined") ? new AbortController() : null;
     var timeoutId = controller ? setTimeout(function(){ controller.abort(); }, 10000) : null;
-    fetch(ICS_URL, { cache: "no-store", signal: controller ? controller.signal : undefined })
+    fetch(ICS_URL + "?t=" + Date.now(), { cache: "no-store", signal: controller ? controller.signal : undefined })
       .then(function(res){
         if (timeoutId) clearTimeout(timeoutId);
         if (!res.ok) throw new Error("HTTP " + res.status);
@@ -244,9 +244,9 @@
       el.statusPanel.innerHTML = "<strong>Récupération de l'emploi du temps…</strong>Connexion à edt-iut.univ-lille.fr";
     } else if (kind==="error"){
       el.statusPanel.innerHTML =
-        "<strong>Impossible de récupérer l'emploi du temps automatiquement</strong>" +
-        "Le serveur de l'IUT bloque probablement les requêtes venant d'un autre site (CORS). " +
-        "Tu peux réessayer, ou coller ci-dessous le contenu du fichier .ics téléchargé manuellement depuis Hyperplanning." +
+        "<strong>L'emploi du temps n'est pas encore disponible</strong>" +
+        "Le fichier data/edt.ics est introuvable ou pas encore synchronisé (la synchro automatique tourne toutes les 10 minutes). " +
+        "Tu peux réessayer, ou coller ci-dessous le contenu du fichier .ics téléchargé manuellement depuis Hyperplanning en attendant." +
         "<div class='row-btns'><button class='btn' id='retryBtn'>Réessayer</button></div>" +
         "<textarea id='icsPaste' placeholder='Colle ici le contenu du fichier .ics…'></textarea>" +
         "<div class='row-btns'><button class='btn ghost' id='loadPasteBtn'>Charger ce texte</button></div>";
