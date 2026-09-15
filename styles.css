@@ -201,6 +201,27 @@ header.top{
 .cal-grid button.muted{color:#c3bba7;}
 .cal-grid button.is-today{border:1.5px solid var(--marker-red);}
 .cal-grid button.is-selected{background:var(--ink);color:var(--paper);}
+.source-hint{
+  font-size:.72rem;
+  color:var(--ink-soft);
+  margin:2px 0 10px;
+  text-align:left;
+}
+.source-input{
+  width:100%;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:.72rem;
+  padding:9px 10px;
+  border:1px solid var(--rule-strong);
+  border-radius:8px;
+  background:#fff;
+  color:var(--ink);
+}
+.icon-btn.is-custom{
+  background:var(--marker-red);
+  border-color:var(--marker-red);
+  color:#fff;
+}
 .cal-today-btn{
   margin-top:12px;width:100%;
   font-family:'IBM Plex Mono',monospace;

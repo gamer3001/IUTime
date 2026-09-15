@@ -28,6 +28,13 @@
       </a>
     </div>
 
+    <div class="sidebar-row">
+      <button class="icon-btn" id="sourceBtn" title="Voir l'emploi du temps d'un lien externe">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.07 0l2.83-2.83a5 5 0 0 0-7.07-7.07L11 4.88"/><path d="M14 11a5 5 0 0 0-7.07 0L4.1 13.83a5 5 0 0 0 7.07 7.07L13 19.12"/></svg>
+      </button>
+      <span class="device-btn" style="cursor:default;background:none;">Autre EDT</span>
+    </div>
+
     <div class="sidebar-row kbd-hint">
       <span><kbd>←</kbd> <kbd>→</kbd> pour naviguer · <kbd>t</kbd> aujourd'hui</span>
     </div>
@@ -85,7 +92,22 @@
       <button class="arrow-btn" id="calNextMonth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></button>
     </div>
     <div class="cal-grid" id="calGrid"></div>
-    <button class="cal-today-btn" id="calTodayBtn">Revenir à aujourd hui</button>
+    <button class="cal-today-btn" id="calTodayBtn">Revenir à aujourd'hui</button>
+  </div>
+</div>
+
+<div class="cal-pop" id="sourcePop">
+  <div class="cal-box" style="width:320px;">
+    <div class="cal-box-head">
+      <span>Autre emploi du temps</span>
+      <button class="arrow-btn" id="sourceCloseBtn" style="width:30px;height:30px;font-size:1rem;">×</button>
+    </div>
+    <p class="source-hint">Tu vois actuellement <strong id="sourceWhich">ton emploi du temps</strong>.</p>
+    <input type="url" id="sourceUrlInput" class="source-input" placeholder="Lien .ics d'un(e) ami(e)…" inputmode="url">
+    <div class="row-btns" style="margin-top:10px;">
+      <button class="btn" id="sourceLoadBtn">Charger ce lien</button>
+    </div>
+    <button class="cal-today-btn" id="sourceResetBtn" style="display:none;">Revenir à mon emploi du temps</button>
   </div>
 </div>
 

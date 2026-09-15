@@ -20,6 +20,9 @@
       <button class="icon-btn" id="refreshBtn" title="Actualiser">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 4v6h-6"/></svg>
       </button>
+      <button class="icon-btn" id="sourceBtn" title="Voir l'emploi du temps d'un lien externe">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.07 0l2.83-2.83a5 5 0 0 0-7.07-7.07L11 4.88"/><path d="M14 11a5 5 0 0 0-7.07 0L4.1 13.83a5 5 0 0 0 7.07 7.07L13 19.12"/></svg>
+      </button>
       <a class="device-btn" href="pc.html" title="Passer sur la version ordinateur">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="1.5"/><path d="M8 21h8M12 17v4"/></svg>
         <span class="full">Version PC</span>
@@ -74,6 +77,21 @@
     </div>
     <div class="cal-grid" id="calGrid"></div>
     <button class="cal-today-btn" id="calTodayBtn">Revenir à aujourd'hui</button>
+  </div>
+</div>
+
+<div class="cal-pop" id="sourcePop">
+  <div class="cal-box" style="width:300px;">
+    <div class="cal-box-head">
+      <span>Autre emploi du temps</span>
+      <button class="arrow-btn" id="sourceCloseBtn" style="width:30px;height:30px;font-size:1rem;">×</button>
+    </div>
+    <p class="source-hint">Tu vois actuellement <strong id="sourceWhich">ton emploi du temps</strong>.</p>
+    <input type="url" id="sourceUrlInput" class="source-input" placeholder="Lien .ics d'un(e) ami(e)…" inputmode="url">
+    <div class="row-btns" style="margin-top:10px;">
+      <button class="btn" id="sourceLoadBtn">Charger ce lien</button>
+    </div>
+    <button class="cal-today-btn" id="sourceResetBtn" style="display:none;">Revenir à mon emploi du temps</button>
   </div>
 </div>
 
