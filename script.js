@@ -426,7 +426,7 @@
   // ---------------------------------------------------------------
   function render(){
     updateDateLabel();
-    buildHourRail(el.hourRail);
+    el.hourRail.innerHTML = "";
     buildHourRail(el.hourRailBody);
     el.colHeads.innerHTML = "";
     el.dayColumns.innerHTML = "";
