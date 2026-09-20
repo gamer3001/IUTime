@@ -5,26 +5,7 @@
   // Config (peut être personnalisée par page via window.EDT_CONFIG)
   // ---------------------------------------------------------------
   var CFG = window.EDT_CONFIG || {};
-  // Lien perso encodé en base64 : évite qu'il traîne en clair dans le code
-  // source (indexation GitHub/Google, scan automatique...). Ce n'est pas un
-  // vrai secret (n'importe qui peut le décoder), juste un frein aux robots.
-  var ICS_URL = atob("aHR0cHM6Ly9lZHQtaXV0LnVuaXYtbGlsbGUuZnIvVGVsZWNoYXJnZW1lbnRzL2ljYWwvRWR0X0hBSUNIT1VSLmljcz92ZXJzaW9uPTIwMTguMC4zLjYmaWRJQ2FsPUJGRjM0MzU4M0JBMDk1NDEzQjY2QjQwOUM0NjUzMzc4JnBhcmFtPTY0M2Q1YjMxMmUyZTM2MzI1ZDI2NjY2ODNkMzEyNjY2M2QzMQ==");
-  var CUSTOM_SOURCE_KEY = "edt_custom_source_url";
-  var CORS_PROXY = "https://api.allorigins.win/raw?url=";
-
-  function getStoredCustomUrl(){
-    try { return localStorage.getItem(CUSTOM_SOURCE_KEY) || null; }
-    catch(e){ return null; }
-  }
-  function setStoredCustomUrl(url){
-    try {
-      if (url) localStorage.setItem(CUSTOM_SOURCE_KEY, url);
-      else localStorage.removeItem(CUSTOM_SOURCE_KEY);
-    } catch(e){}
-  }
-  function getActiveSource(){
-    return getStoredCustomUrl() || ICS_URL;
-  }
+  var ICS_URL = "data/edt.ics";
   var HOUR_START = 0;
   var HOUR_END = 24;
   var HOUR_PX = CFG.hourPx || 64;
@@ -78,14 +59,7 @@
     calMonthLabel: document.getElementById("calMonthLabel"),
     calPrevMonth: document.getElementById("calPrevMonth"),
     calNextMonth: document.getElementById("calNextMonth"),
-    calTodayBtn: document.getElementById("calTodayBtn"),
-    sourceBtn: document.getElementById("sourceBtn"),
-    sourcePop: document.getElementById("sourcePop"),
-    sourceCloseBtn: document.getElementById("sourceCloseBtn"),
-    sourceWhich: document.getElementById("sourceWhich"),
-    sourceUrlInput: document.getElementById("sourceUrlInput"),
-    sourceLoadBtn: document.getElementById("sourceLoadBtn"),
-    sourceResetBtn: document.getElementById("sourceResetBtn")
+    calTodayBtn: document.getElementById("calTodayBtn")
   };
 
   // ---------------------------------------------------------------
@@ -223,69 +197,43 @@
   // ---------------------------------------------------------------
   // Fetch
   // ---------------------------------------------------------------
-  function fetchOnce(url){
-    return new Promise(function(resolve, reject){
-      var controller = (typeof AbortController !== "undefined") ? new AbortController() : null;
-      var timeoutId = controller ? setTimeout(function(){ controller.abort(); }, 10000) : null;
-      var sep = url.indexOf("?")===-1 ? "?" : "&";
-      var fetchedUrl = url + sep + "t=" + Date.now();
-      fetch(fetchedUrl, { cache: "no-store", signal: controller ? controller.signal : undefined })
-        .then(function(res){
-          if (timeoutId) clearTimeout(timeoutId);
-          if (!res.ok){
-            var e = new Error("HTTP " + res.status);
-            e.httpStatus = res.status;
-            e.url = fetchedUrl;
-            throw e;
-          }
-          return res.text();
-        })
-        .then(function(text){
-          // Filet de sécurité : si le fichier récupéré n'est pas un vrai .ics
-          // (ex: page 404 renvoyée avec un statut 200, fichier vide, contenu
-          // corrompu, ou page HTML d'un proxy en erreur), on le signale
-          // clairement au lieu d'afficher un planning vide sans explication.
-          if (!/BEGIN:VCALENDAR/i.test(text)){
-            var e2 = new Error("Contenu invalide (pas de BEGIN:VCALENDAR)");
-            e2.badContent = true;
-            e2.snippet = text.slice(0, 160);
-            e2.url = fetchedUrl;
-            throw e2;
-          }
-          resolve(text);
-        })
-        .catch(function(err){
-          if (timeoutId) clearTimeout(timeoutId);
-          err.url = err.url || fetchedUrl;
-          reject(err);
-        });
-    });
-  }
-
   function fetchSchedule(showSpinner){
     if (showSpinner && el.refreshBtn) el.refreshBtn.classList.add("spinning");
-    var source = getActiveSource();
-    var isCustom = !!getStoredCustomUrl();
-    showStatus("loading", null, null, isCustom);
-
-    fetchOnce(source)
-      .catch(function(){
-        // Le fetch direct est quasi certainement bloqué par CORS depuis un
-        // site tiers (edt-iut.univ-lille.fr n'autorise pas les requêtes
-        // cross-origin) : on retente via un proxy public avant d'abandonner.
-        return fetchOnce(CORS_PROXY + encodeURIComponent(source));
+    showStatus("loading");
+    var controller = (typeof AbortController !== "undefined") ? new AbortController() : null;
+    var timeoutId = controller ? setTimeout(function(){ controller.abort(); }, 10000) : null;
+    var fetchedUrl = ICS_URL + "?t=" + Date.now();
+    fetch(fetchedUrl, { cache: "no-store", signal: controller ? controller.signal : undefined })
+      .then(function(res){
+        if (timeoutId) clearTimeout(timeoutId);
+        if (!res.ok){
+          var e = new Error("HTTP " + res.status);
+          e.httpStatus = res.status;
+          throw e;
+        }
+        return res.text();
       })
       .then(function(text){
+        // Filet de sécurité : si le fichier récupéré n'est pas un vrai .ics
+        // (ex: page 404 de GitHub Pages renvoyée avec un statut 200, fichier
+        // vide, ou contenu corrompu), on le signale clairement au lieu
+        // d'afficher un planning vide sans explication.
+        if (!/BEGIN:VCALENDAR/i.test(text)){
+          var e2 = new Error("Contenu invalide (pas de BEGIN:VCALENDAR)");
+          e2.badContent = true;
+          e2.snippet = text.slice(0, 160);
+          throw e2;
+        }
         state.events = parseIcs(text);
         assignColorsInOrder();
         hideStatus();
         renderLegend();
         render();
-        var suffix = isCustom ? " · lien externe" : "";
-        el.metaLine.textContent = "Dernière synchro : " + new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}) + " · " + state.events.length + " événement(s)" + suffix;
+        el.metaLine.textContent = "Dernière synchro : " + new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}) + " · " + state.events.length + " événement(s)";
       })
       .catch(function(err){
-        showStatus("error", err, err.url, isCustom);
+        if (timeoutId) clearTimeout(timeoutId);
+        showStatus("error", err, fetchedUrl);
       })
       .finally(function(){
         if (el.refreshBtn) el.refreshBtn.classList.remove("spinning");
@@ -304,38 +252,36 @@
     });
   }
 
-  function showStatus(kind, err, url, isCustom){
+  function showStatus(kind, err, url){
     el.board.style.display = "none";
     el.statusPanel.style.display = "block";
     if (kind==="loading"){
-      el.statusPanel.innerHTML = "<strong>Récupération de l'emploi du temps…</strong>" + (isCustom ? "Lecture du lien externe" : "Connexion à edt-iut.univ-lille.fr");
+      el.statusPanel.innerHTML = "<strong>Récupération de l'emploi du temps…</strong>Lecture de data/edt.ics";
     } else if (kind==="error"){
       var diag = "";
-      if (err && err.httpStatus){
+      if (err && err.httpStatus === 404){
+        diag = "Diagnostic : le fichier <code>data/edt.ics</code> répond en <strong>404</strong> — il n'existe donc pas encore à cet endroit du site. " +
+               "Le plus souvent ça veut dire que le workflow GitHub Actions « Sync emploi du temps » n'a jamais tourné avec succès (secret manquant, permissions d'écriture désactivées, ou pas encore lancé une première fois manuellement).";
+      } else if (err && err.httpStatus){
         diag = "Diagnostic : le serveur a répondu avec le code HTTP <strong>" + err.httpStatus + "</strong> pour <code>" + escapeHtml(url||ICS_URL) + "</code>.";
       } else if (err && err.badContent){
         diag = "Diagnostic : le fichier a bien été trouvé, mais son contenu ne ressemble pas à un vrai fichier .ics (il ne contient pas <code>BEGIN:VCALENDAR</code>). " +
                "Début du contenu reçu : <code>" + escapeHtml(err.snippet||"") + "</code>";
       } else if (err && err.name === "AbortError"){
-        diag = "Diagnostic : la requête a expiré après 10 secondes sans réponse (problème réseau, proxy ou serveur trop lent).";
+        diag = "Diagnostic : la requête a expiré après 10 secondes sans réponse (problème réseau ou serveur trop lent).";
       } else if (err){
         diag = "Diagnostic : " + escapeHtml(err.message || String(err)) + ".";
       }
-      var introTitle = isCustom ? "Impossible de charger ce lien externe" : "Impossible de récupérer ton emploi du temps";
-      var introText = isCustom
-        ? "Même en passant par un proxy, ce lien n'a pas pu être récupéré. Vérifie qu'il s'agit bien d'un lien .ics valide, ou colle son contenu ci-dessous."
-        : "edt-iut.univ-lille.fr n'a pas répondu correctement, même en passant par le proxy. Réessaie dans un instant, ou colle ci-dessous le contenu du fichier .ics téléchargé manuellement depuis Hyperplanning en attendant.";
       el.statusPanel.innerHTML =
-        "<strong>" + introTitle + "</strong>" + introText +
+        "<strong>L'emploi du temps n'est pas encore disponible</strong>" +
+        "Le fichier data/edt.ics est introuvable ou pas encore synchronisé (la synchro automatique tourne toutes les 10 minutes). " +
+        "Tu peux réessayer, ou coller ci-dessous le contenu du fichier .ics téléchargé manuellement depuis Hyperplanning en attendant." +
         (diag ? "<p style='font-size:.72rem;text-align:left;background:var(--paper-dark);border-radius:8px;padding:8px 10px;margin-top:12px;'>" + diag + "</p>" : "") +
         "<div class='row-btns'><button class='btn' id='retryBtn'>Réessayer</button>" +
-        (isCustom ? "<button class='btn ghost' id='backToMineBtn'>Revenir à mon emploi du temps</button>" : "") +
-        "</div>" +
+        "<a class='btn ghost' href='" + (url||ICS_URL) + "' target='_blank' rel='noopener'>Ouvrir data/edt.ics</a></div>" +
         "<textarea id='icsPaste' placeholder='Colle ici le contenu du fichier .ics…'></textarea>" +
         "<div class='row-btns'><button class='btn ghost' id='loadPasteBtn'>Charger ce texte</button></div>";
       document.getElementById("retryBtn").addEventListener("click", function(){ fetchSchedule(true); });
-      var backBtn = document.getElementById("backToMineBtn");
-      if (backBtn) backBtn.addEventListener("click", function(){ setStoredCustomUrl(null); fetchSchedule(true); });
       document.getElementById("loadPasteBtn").addEventListener("click", function(){
         var txt = document.getElementById("icsPaste").value;
         if (!txt.trim()) return;
@@ -635,52 +581,6 @@
       el.calGrid.appendChild(btn);
     }
   }
-
-  // ---------------------------------------------------------------
-  // Popover "autre emploi du temps" (lien d'un tiers)
-  // ---------------------------------------------------------------
-  function refreshSourceUi(){
-    if (!el.sourceWhich) return;
-    var custom = getStoredCustomUrl();
-    el.sourceWhich.textContent = custom ? "l'emploi du temps d'un lien externe" : "ton emploi du temps";
-    if (el.sourceUrlInput) el.sourceUrlInput.value = custom || "";
-    if (el.sourceResetBtn) el.sourceResetBtn.style.display = custom ? "block" : "none";
-    if (el.sourceBtn) el.sourceBtn.classList.toggle("is-custom", !!custom);
-  }
-  if (el.sourceBtn && el.sourcePop){
-    el.sourceBtn.addEventListener("click", function(){
-      refreshSourceUi();
-      el.sourcePop.classList.add("open");
-      if (el.sourceUrlInput) el.sourceUrlInput.focus();
-    });
-    el.sourcePop.addEventListener("click", function(ev){
-      if (ev.target===el.sourcePop) el.sourcePop.classList.remove("open");
-    });
-    if (el.sourceCloseBtn){
-      el.sourceCloseBtn.addEventListener("click", function(){ el.sourcePop.classList.remove("open"); });
-    }
-    if (el.sourceLoadBtn){
-      el.sourceLoadBtn.addEventListener("click", function(){
-        var val = (el.sourceUrlInput && el.sourceUrlInput.value || "").trim();
-        if (!val) return;
-        if (!/^https?:\/\//i.test(val)){
-          alert("Colle un lien complet commençant par http:// ou https://");
-          return;
-        }
-        setStoredCustomUrl(val);
-        el.sourcePop.classList.remove("open");
-        fetchSchedule(true);
-      });
-    }
-    if (el.sourceResetBtn){
-      el.sourceResetBtn.addEventListener("click", function(){
-        setStoredCustomUrl(null);
-        el.sourcePop.classList.remove("open");
-        fetchSchedule(true);
-      });
-    }
-  }
-  refreshSourceUi();
 
   // ---------------------------------------------------------------
   // Init
