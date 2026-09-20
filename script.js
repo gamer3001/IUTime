@@ -424,20 +424,10 @@
   // ---------------------------------------------------------------
   // Render: main board
   // ---------------------------------------------------------------
-  function isNarrowScreen(){
-    return window.innerWidth <= 700;
-  }
-
   function render(){
     updateDateLabel();
     var days = state.mode==="day" ? [state.cursor] : weekDays(state.cursor);
-    var stacked = state.mode==="week" && isNarrowScreen();
-
-    if (stacked){
-      renderStacked(days);
-    } else {
-      renderGrid(days);
-    }
+    renderGrid(days);
 
     if (!render._scrolled){
       el.boardScroll.scrollTop = Math.max(0, (DEFAULT_SCROLL_HOUR - HOUR_START) * HOUR_PX - 20);
@@ -448,7 +438,6 @@
   // Grille classique : un rail d'heures partagé + des colonnes côte à côte
   // (jour unique, ou semaine sur écran large).
   function renderGrid(days){
-    el.board.classList.remove("stacked");
     el.hourRail.innerHTML = "";
     buildHourRail(el.hourRailBody);
     el.colHeads.innerHTML = "";
@@ -468,43 +457,7 @@
     });
   }
 
-  // Liste empilée : chaque jour prend toute la largeur, avec son propre
-  // en-tête et son propre rail d'heures, l'un sous l'autre. Utilisé pour la
-  // vue Semaine sur petit écran, où 6 colonnes côte à côte seraient illisibles.
-  function renderStacked(days){
-    el.board.classList.add("stacked");
-    el.hourRail.innerHTML = "";
-    el.colHeads.innerHTML = "";
-    el.colHeads.style.display = "none";
-    el.hourRailBody.style.display = "none";
-    el.dayColumns.innerHTML = "";
-    el.dayColumns.className = "day-columns stacked-list";
-
-    days.forEach(function(day){
-      var block = document.createElement("div");
-      block.className = "stack-day" + (isToday(day)?" is-today":"");
-
-      var head = document.createElement("div");
-      head.className = "col-head";
-      head.innerHTML = "<div class='dname'>"+capitalize(DOW_FULL[day.getDay()])+"</div><div class='dnum'>"+day.getDate()+" "+MONTHS[day.getMonth()]+"</div>";
-      block.appendChild(head);
-
-      var row = document.createElement("div");
-      row.className = "grid-row";
-
-      var rail = document.createElement("div");
-      rail.className = "hour-rail";
-      buildHourRail(rail);
-      row.appendChild(rail);
-
-      row.appendChild(buildDayColumn(day));
-      block.appendChild(row);
-      el.dayColumns.appendChild(block);
-    });
-  }
-
-  // Construit une colonne de jour (créneaux vides + événements), utilisée
-  // aussi bien par la grille classique que par la liste empilée.
+  // Construit une colonne de jour (créneaux vides + événements).
   function buildDayColumn(day){
     var col = document.createElement("div");
     col.className = "day-col" + (isToday(day)?" is-today":"");
@@ -531,10 +484,6 @@
     addNowLine(col, day);
     return col;
   }
-
-  window.addEventListener("resize", function(){
-    if (state.mode==="week") render();
-  });
 
   function capitalize(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
   function weekDays(anyDayInWeek){
