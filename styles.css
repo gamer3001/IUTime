@@ -293,6 +293,7 @@ header.top{
 }
 
 .col-head{
+  flex:1;
   padding:8px 6px;
   text-align:center;
   border-right:1px solid var(--rule);
@@ -347,6 +348,26 @@ header.top{
   padding:1px 5px;border-radius:4px;
 }
 .event.tiny .t-room{display:none;}
+
+.day-columns.stacked-list{
+  flex-direction:column;
+}
+.stack-day{
+  border-bottom:2px solid var(--ink);
+}
+.stack-day:last-child{
+  border-bottom:none;
+}
+.stack-day .col-head{
+  border-right:none;
+  border-bottom:1.5px solid var(--rule-strong);
+  text-align:left;
+  padding:10px 12px;
+}
+.stack-day.is-today .col-head{background:rgba(245,214,122,.35);}
+.stack-day.is-today .dname{color:var(--marker-red);}
+.stack-day .grid-row{display:flex;}
+.stack-day .day-col{border-right:none;}
 
 .empty-day{
   display:flex;align-items:center;justify-content:center;

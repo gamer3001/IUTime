@@ -406,8 +406,8 @@
       el.dateSub.textContent = isToday(d) ? "aujourd'hui" : d.getFullYear().toString();
     } else {
       var mon = mondayOf(state.cursor);
-      var sun = addDays(mon,6);
-      el.dateMain.textContent = mon.getDate() + " – " + sun.getDate() + " " + MONTHS[sun.getMonth()];
+      var sat = addDays(mon,5);
+      el.dateMain.textContent = mon.getDate() + " – " + sat.getDate() + " " + MONTHS[sat.getMonth()];
       el.dateSub.textContent = "semaine " + isoWeekNumber(mon);
     }
   }
@@ -424,47 +424,20 @@
   // ---------------------------------------------------------------
   // Render: main board
   // ---------------------------------------------------------------
+  function isNarrowScreen(){
+    return window.innerWidth <= 700;
+  }
+
   function render(){
     updateDateLabel();
-    el.hourRail.innerHTML = "";
-    buildHourRail(el.hourRailBody);
-    el.colHeads.innerHTML = "";
-    el.dayColumns.innerHTML = "";
-
     var days = state.mode==="day" ? [state.cursor] : weekDays(state.cursor);
+    var stacked = state.mode==="week" && isNarrowScreen();
 
-    days.forEach(function(day){
-      var head = document.createElement("div");
-      head.className = "col-head" + (isToday(day)?" is-today":"");
-      head.innerHTML = "<div class='dname'>"+ (state.mode==="week" ? capitalize(DOW_SHORT[day.getDay()]) : capitalize(DOW_FULL[day.getDay()])) +"</div><div class='dnum'>"+day.getDate()+"</div>";
-      el.colHeads.appendChild(head);
-
-      var col = document.createElement("div");
-      col.className = "day-col" + (isToday(day)?" is-today":"");
-      col.style.height = ((HOUR_END-HOUR_START)*HOUR_PX)+"px";
-
-      for (var h=HOUR_START; h<HOUR_END; h++){
-        var s = document.createElement("div");
-        s.className = "hour-slot";
-        s.style.height = HOUR_PX+"px";
-        col.appendChild(s);
-      }
-
-      var dayEvents = layoutDay(eventsForDay(day));
-      if (dayEvents.length===0 && state.mode==="day"){
-        var empty = document.createElement("div");
-        empty.className = "empty-day";
-        empty.textContent = "Rien de prévu ce jour-là.";
-        empty.style.position="absolute";empty.style.top="0";empty.style.left="0";empty.style.right="0";empty.style.bottom="0";
-        col.appendChild(empty);
-      }
-      dayEvents.forEach(function(e){
-        col.appendChild(buildEventNode(e));
-      });
-      addNowLine(col, day);
-
-      el.dayColumns.appendChild(col);
-    });
+    if (stacked){
+      renderStacked(days);
+    } else {
+      renderGrid(days);
+    }
 
     if (!render._scrolled){
       el.boardScroll.scrollTop = Math.max(0, (DEFAULT_SCROLL_HOUR - HOUR_START) * HOUR_PX - 20);
@@ -472,11 +445,104 @@
     }
   }
 
+  // Grille classique : un rail d'heures partagé + des colonnes côte à côte
+  // (jour unique, ou semaine sur écran large).
+  function renderGrid(days){
+    el.board.classList.remove("stacked");
+    el.hourRail.innerHTML = "";
+    buildHourRail(el.hourRailBody);
+    el.colHeads.innerHTML = "";
+    el.colHeads.style.display = "";
+    el.hourRailBody.style.display = "";
+    el.dayColumns.innerHTML = "";
+    el.dayColumns.className = "day-columns";
+
+    days.forEach(function(day){
+      var head = document.createElement("div");
+      head.className = "col-head" + (isToday(day)?" is-today":"");
+      head.innerHTML = "<div class='dname'>"+ (state.mode==="week" ? capitalize(DOW_SHORT[day.getDay()]) : capitalize(DOW_FULL[day.getDay()])) +"</div><div class='dnum'>"+day.getDate()+"</div>";
+      el.colHeads.appendChild(head);
+
+      var col = buildDayColumn(day);
+      el.dayColumns.appendChild(col);
+    });
+  }
+
+  // Liste empilée : chaque jour prend toute la largeur, avec son propre
+  // en-tête et son propre rail d'heures, l'un sous l'autre. Utilisé pour la
+  // vue Semaine sur petit écran, où 6 colonnes côte à côte seraient illisibles.
+  function renderStacked(days){
+    el.board.classList.add("stacked");
+    el.hourRail.innerHTML = "";
+    el.colHeads.innerHTML = "";
+    el.colHeads.style.display = "none";
+    el.hourRailBody.style.display = "none";
+    el.dayColumns.innerHTML = "";
+    el.dayColumns.className = "day-columns stacked-list";
+
+    days.forEach(function(day){
+      var block = document.createElement("div");
+      block.className = "stack-day" + (isToday(day)?" is-today":"");
+
+      var head = document.createElement("div");
+      head.className = "col-head";
+      head.innerHTML = "<div class='dname'>"+capitalize(DOW_FULL[day.getDay()])+"</div><div class='dnum'>"+day.getDate()+" "+MONTHS[day.getMonth()]+"</div>";
+      block.appendChild(head);
+
+      var row = document.createElement("div");
+      row.className = "grid-row";
+
+      var rail = document.createElement("div");
+      rail.className = "hour-rail";
+      buildHourRail(rail);
+      row.appendChild(rail);
+
+      row.appendChild(buildDayColumn(day));
+      block.appendChild(row);
+      el.dayColumns.appendChild(block);
+    });
+  }
+
+  // Construit une colonne de jour (créneaux vides + événements), utilisée
+  // aussi bien par la grille classique que par la liste empilée.
+  function buildDayColumn(day){
+    var col = document.createElement("div");
+    col.className = "day-col" + (isToday(day)?" is-today":"");
+    col.style.height = ((HOUR_END-HOUR_START)*HOUR_PX)+"px";
+
+    for (var h=HOUR_START; h<HOUR_END; h++){
+      var s = document.createElement("div");
+      s.className = "hour-slot";
+      s.style.height = HOUR_PX+"px";
+      col.appendChild(s);
+    }
+
+    var dayEvents = layoutDay(eventsForDay(day));
+    if (dayEvents.length===0){
+      var empty = document.createElement("div");
+      empty.className = "empty-day";
+      empty.textContent = "Rien de prévu ce jour-là.";
+      empty.style.position="absolute";empty.style.top="0";empty.style.left="0";empty.style.right="0";empty.style.bottom="0";
+      col.appendChild(empty);
+    }
+    dayEvents.forEach(function(e){
+      col.appendChild(buildEventNode(e));
+    });
+    addNowLine(col, day);
+    return col;
+  }
+
+  window.addEventListener("resize", function(){
+    if (state.mode==="week") render();
+  });
+
   function capitalize(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
   function weekDays(anyDayInWeek){
+    // Du lundi au samedi seulement : pas de cours le dimanche, inutile de
+    // lui réserver une colonne vide.
     var mon = mondayOf(anyDayInWeek);
     var arr = [];
-    for (var i=0;i<7;i++) arr.push(addDays(mon,i));
+    for (var i=0;i<6;i++) arr.push(addDays(mon,i));
     return arr;
   }
 
@@ -496,10 +562,12 @@
   // ---------------------------------------------------------------
   function goPrev(){
     state.cursor = addDays(state.cursor, state.mode==="day"?-1:-7);
+    if (state.mode==="day" && state.cursor.getDay()===0) state.cursor = addDays(state.cursor, -1);
     render();
   }
   function goNext(){
     state.cursor = addDays(state.cursor, state.mode==="day"?1:7);
+    if (state.mode==="day" && state.cursor.getDay()===0) state.cursor = addDays(state.cursor, 1);
     render();
   }
   function goToday(){
@@ -572,13 +640,20 @@
       if (d.getMonth()!==m.getMonth()) btn.classList.add("muted");
       if (isToday(d)) btn.classList.add("is-today");
       if (sameDay(d, state.cursor)) btn.classList.add("is-selected");
-      (function(dd){
-        btn.addEventListener("click", function(){
-          state.cursor = dd;
-          el.calPop.classList.remove("open");
-          render();
-        });
-      })(d);
+      if (d.getDay()===0){
+        btn.classList.add("muted");
+        btn.disabled = true;
+        btn.style.opacity = ".35";
+        btn.style.cursor = "default";
+      } else {
+        (function(dd){
+          btn.addEventListener("click", function(){
+            state.cursor = dd;
+            el.calPop.classList.remove("open");
+            render();
+          });
+        })(d);
+      }
       el.calGrid.appendChild(btn);
     }
   }
