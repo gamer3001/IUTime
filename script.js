@@ -6,10 +6,10 @@
   // ---------------------------------------------------------------
   var CFG = window.EDT_CONFIG || {};
   var ICS_URL = "data/edt.ics";
-  var HOUR_START = 0;
-  var HOUR_END = 24;
+  var HOUR_START = 8;
+  var HOUR_END = 21;
   var HOUR_PX = CFG.hourPx || 64;
-  var DEFAULT_SCROLL_HOUR = (CFG.scrollHour != null) ? CFG.scrollHour : 7;
+  var DEFAULT_SCROLL_HOUR = (CFG.scrollHour != null) ? CFG.scrollHour : HOUR_START;
   var REFRESH_MS = 5 * 60 * 1000;
 
   var DOW_FULL = ["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"];
@@ -353,8 +353,9 @@
   }
 
   function buildEventNode(e){
-    var top = (minutesFromStart(e.start)/60) * HOUR_PX;
-    var rawEnd = minutesFromStart(e.end)/60 * HOUR_PX;
+    var gridHeight = (HOUR_END-HOUR_START) * HOUR_PX;
+    var top = Math.max(0, (minutesFromStart(e.start)/60) * HOUR_PX);
+    var rawEnd = Math.min(gridHeight, minutesFromStart(e.end)/60 * HOUR_PX);
     var height = Math.max(rawEnd - top, 24);
     var color = colorFor(e.subject);
 
@@ -466,7 +467,7 @@
     });
 
     if (!render._scrolled){
-      el.boardScroll.scrollTop = DEFAULT_SCROLL_HOUR * HOUR_PX - 20;
+      el.boardScroll.scrollTop = Math.max(0, (DEFAULT_SCROLL_HOUR - HOUR_START) * HOUR_PX - 20);
       render._scrolled = true;
     }
   }
