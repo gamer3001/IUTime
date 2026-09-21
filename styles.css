@@ -333,9 +333,14 @@ header.top{
   display:block;
 }
 .event .t-room{
-  font-size:.64rem;
-  opacity:.85;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:.66rem;
+  font-weight:600;
+  opacity:.9;
   display:block;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 .event.cancelled{
   background:repeating-linear-gradient(135deg, rgba(178,58,46,.14), rgba(178,58,46,.14) 6px, rgba(178,58,46,.05) 6px, rgba(178,58,46,.05) 12px);
@@ -347,7 +352,8 @@ header.top{
   background:var(--marker-red);color:#fff;
   padding:1px 5px;border-radius:4px;
 }
-.event.tiny .t-room{display:none;}
+.event.tiny .t-room{display:inline;margin-left:4px;}
+.event.tiny .t-time{display:inline;}
 
 .empty-day{
   display:flex;align-items:center;justify-content:center;
@@ -377,7 +383,7 @@ header.top{
   .brand h1{font-size:1.25rem;}
   .board-scroll{max-height:65vh;}
   .hour-rail{width:40px;}
-  .event .t-room{display:none;}
+  .event .t-room{font-size:.6rem;}
   .col-head .dname{font-size:.72rem;}
   .device-btn span.full{display:none;}
 }

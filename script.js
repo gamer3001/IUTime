@@ -374,11 +374,32 @@
     node.style.width = "calc(" + widthPct + "% - 6px)";
 
     var timeStr = pad2(e.start.getHours())+"h"+pad2(e.start.getMinutes()) + " – " + pad2(e.end.getHours())+"h"+pad2(e.end.getMinutes());
-    var html = "<span class='t-time'>"+timeStr+"</span><span class='t-name'>"+escapeHtml(e.summary)+"</span>";
-    if (e.location) html += "<span class='t-room'>"+escapeHtml(e.location)+"</span>";
+    var room = roomLabel(e);
+    var roomHtml = room ? "<span class='t-room' title='"+escapeHtml(room.full)+"'>"+escapeHtml(room.short)+"</span>" : "";
+    var html;
+    if (height<40){
+      // Petit créneau : salle sur la même ligne que l'heure
+      html = "<span class='t-time'>"+timeStr+"</span>"+roomHtml+"<span class='t-name'>"+escapeHtml(e.summary)+"</span>";
+    } else {
+      html = "<span class='t-time'>"+timeStr+"</span><span class='t-name'>"+escapeHtml(e.summary)+"</span>"+roomHtml;
+    }
     if (e.cancelled) html += "<span class='badge'>Prof./pers. absent</span>";
     node.innerHTML = html;
     return node;
+  }
+
+  // Salle(s) d'un événement : champ LOCATION, sinon ligne "Salle : ..." de la
+  // description. Plusieurs salles → on en garde 2 et on résume le reste (+N).
+  function roomLabel(e){
+    var loc = (e.location || "").trim();
+    if (!loc && e.description){
+      var m = /Salle\s*:\s*([^\n]+)/i.exec(e.description);
+      if (m) loc = m[1].trim();
+    }
+    if (!loc) return null;
+    var rooms = loc.split(/\s*,\s*/).filter(Boolean);
+    var short = rooms.length > 2 ? rooms.slice(0,2).join(", ") + " +" + (rooms.length-2) : rooms.join(", ");
+    return { short: short, full: rooms.join(", ") };
   }
 
   function pad2(n){ return (n<10?"0":"")+n; }
